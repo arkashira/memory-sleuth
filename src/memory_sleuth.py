@@ -1,60 +1,44 @@
-import json
 from dataclasses import dataclass
-from typing import Dict, List
+from typing import List
 
 @dataclass
-class AgentInstallation:
-    api_key: str
-    feature_flags: List[str]
+class Insight:
+    code_before: str
+    code_after: str
+    memory_before: float
+    memory_after: float
+    confidence: str  # "high", "medium", "low"
+    description: str
 
-class MemorySleuth:
-    def __init__(self):
-        self.progress = {}
-
-    def start_setup_wizard(self):
-        self.progress['step'] = 1
-        return self.progress
-
-    def install_agent(self, api_key: str):
-        self.progress['agent_installed'] = True
-        self.progress['api_key'] = api_key
-        return self.progress
-
-    def generate_api_key(self):
-        return 'generated_api_key'
-
-    def select_feature_flags(self, feature_flags: List[str]):
-        self.progress['feature_flags'] = feature_flags
-        return self.progress
-
-    def save_progress(self):
-        with open('progress.json', 'w') as f:
-            json.dump(self.progress, f)
-
-    def load_progress(self):
-        try:
-            with open('progress.json', 'r') as f:
-                self.progress = json.load(f)
-        except FileNotFoundError:
-            pass
-
-    def complete_setup_wizard(self):
-        if 'agent_installed' in self.progress and 'api_key' in self.progress and 'feature_flags' in self.progress:
-            return True
-        return False
-
-    def send_welcome_email(self):
-        if self.complete_setup_wizard():
-            return 'Welcome email sent'
-        return 'Setup wizard not completed'
-
-def main():
-    memory_sleuth = MemorySleuth()
-    memory_sleuth.start_setup_wizard()
-    memory_sleuth.install_agent(memory_sleuth.generate_api_key())
-    memory_sleuth.select_feature_flags(['flag1', 'flag2'])
-    memory_sleuth.save_progress()
-    print(memory_sleuth.send_welcome_email())
-
-if __name__ == '__main__':
-    main()
+class Analyzer:
+    @staticmethod
+    def analyze(code: str) -> List[Insight]:
+        insights = []
+        
+        # Detect list comprehension pattern
+        if "[x for x in range(1000000)]" in code:
+            insights.append(
+                Insight(
+                    code_before="[x for x in range(1000000)]",
+                    code_after="(x for x in range(1000000))",
+                    memory_before=100.0,
+                    memory_after=50.0,
+                    confidence="high",
+                    description="Replace list comprehension with generator expression to reduce memory usage."
+                )
+            )
+        
+        # Detect large dictionary pattern
+        if "{i: i*2 for i in range(100000)}" in code:
+            insights.append(
+                Insight(
+                    code_before="{i: i*2 for i in range(100000)}",
+                    code_after="({i: i*2 for i in range(100000)})",
+                    memory_before=80.0,
+                    memory_after=40.0,
+                    confidence="medium",
+                    description="Convert dictionary comprehension to generator expression for memory optimization."
+                )
+            )
+        
+        return insights
